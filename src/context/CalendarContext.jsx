@@ -5,10 +5,13 @@ import {
   INITIAL_EVENTS,
   INITIAL_NOTIFICATIONS
 } from '../data/initialData';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const CalendarContext = createContext(null);
 
 export const CalendarProvider = ({ children }) => {
+  const isCloudConnected = isSupabaseConfigured();
+
   // Current logged in user state (Toggleable between Admin and Staff for testing)
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('occ_user');
@@ -23,7 +26,7 @@ export const CalendarProvider = ({ children }) => {
         };
   });
 
-  // Data Collections with LocalStorage persistence & Supabase bridge capability
+  // State with LocalStorage fallback / cache
   const [events, setEvents] = useState(() => {
     const saved = localStorage.getItem('occ_events');
     return saved ? JSON.parse(saved) : INITIAL_EVENTS;
@@ -58,13 +61,14 @@ export const CalendarProvider = ({ children }) => {
         };
   });
 
-  // Outgoing email audit log simulation
   const [sentEmails, setSentEmails] = useState(() => {
     const saved = localStorage.getItem('occ_sent_emails');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Sync to LocalStorage
+  const [isLoadingCloud, setIsLoadingCloud] = useState(false);
+
+  // Sync state changes to LocalStorage
   useEffect(() => {
     localStorage.setItem('occ_user', JSON.stringify(currentUser));
   }, [currentUser]);
@@ -93,7 +97,62 @@ export const CalendarProvider = ({ children }) => {
     localStorage.setItem('occ_sent_emails', JSON.stringify(sentEmails));
   }, [sentEmails]);
 
-  // Simulate Email Dispatch
+  // Load and seed Supabase data when connected
+  useEffect(() => {
+    if (!isCloudConnected || !supabase) return;
+
+    let isMounted = true;
+
+    async function syncWithSupabase() {
+      setIsLoadingCloud(true);
+      try {
+        // 1. Fetch Events
+        const { data: dbEvents, error: eventsError } = await supabase.from('events').select('*');
+        if (!eventsError && dbEvents && dbEvents.length > 0) {
+          if (isMounted) setEvents(dbEvents);
+        } else if (!eventsError && dbEvents && dbEvents.length === 0) {
+          // Auto-seed initial demo events to Supabase so table is populated
+          await supabase.from('events').insert(INITIAL_EVENTS);
+        }
+
+        // 2. Fetch Staff
+        const { data: dbStaff, error: staffError } = await supabase.from('staff').select('*');
+        if (!staffError && dbStaff && dbStaff.length > 0) {
+          if (isMounted) setStaff(dbStaff);
+        } else if (!staffError && dbStaff && dbStaff.length === 0) {
+          await supabase.from('staff').insert(INITIAL_STAFF);
+        }
+
+        // 3. Fetch Holidays
+        const { data: dbHolidays, error: holidaysError } = await supabase.from('holidays').select('*');
+        if (!holidaysError && dbHolidays && dbHolidays.length > 0) {
+          if (isMounted) setHolidays(dbHolidays);
+        } else if (!holidaysError && dbHolidays && dbHolidays.length === 0) {
+          await supabase.from('holidays').insert(DEFAULT_NIGERIAN_HOLIDAYS);
+        }
+
+        // 4. Fetch Notifications
+        const { data: dbNotifs, error: notifsError } = await supabase.from('notifications').select('*');
+        if (!notifsError && dbNotifs && dbNotifs.length > 0) {
+          if (isMounted) setNotifications(dbNotifs);
+        } else if (!notifsError && dbNotifs && dbNotifs.length === 0) {
+          await supabase.from('notifications').insert(INITIAL_NOTIFICATIONS);
+        }
+      } catch (err) {
+        console.warn('Supabase fetch error; working in cached/local mode:', err);
+      } finally {
+        if (isMounted) setIsLoadingCloud(false);
+      }
+    }
+
+    syncWithSupabase();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isCloudConnected]);
+
+  // Simulate Email Dispatch & Audit Trail
   const sendEmailNotification = (subject, body, recipients = 'all') => {
     if (!companySettings.emailNotifications) return;
 
@@ -117,7 +176,6 @@ export const CalendarProvider = ({ children }) => {
 
     setSentEmails(prev => [emailRecord, ...prev]);
 
-    // Add In-App notification as well if enabled
     if (companySettings.inAppNotifications) {
       addNotification({
         title: subject,
@@ -128,7 +186,6 @@ export const CalendarProvider = ({ children }) => {
     }
   };
 
-  // Switch role between Admin and Staff easily
   const switchRole = (role) => {
     if (role === 'admin') {
       setCurrentUser({
@@ -149,13 +206,21 @@ export const CalendarProvider = ({ children }) => {
     }
   };
 
-  // Event Handlers
-  const addEvent = (eventData) => {
+  // Events Handlers
+  const addEvent = async (eventData) => {
     const newEvent = {
       ...eventData,
       id: 'evt-' + Date.now()
     };
     setEvents(prev => [newEvent, ...prev]);
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('events').insert([newEvent]);
+      } catch (e) {
+        console.error('Supabase event insert:', e);
+      }
+    }
 
     sendEmailNotification(
       `New Event Created: ${newEvent.title}`,
@@ -164,19 +229,37 @@ export const CalendarProvider = ({ children }) => {
     return newEvent;
   };
 
-  const updateEvent = (id, updatedData) => {
+  const updateEvent = async (id, updatedData) => {
     setEvents(prev =>
       prev.map(item => (item.id === id ? { ...item, ...updatedData } : item))
     );
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('events').update(updatedData).eq('id', id);
+      } catch (e) {
+        console.error('Supabase event update:', e);
+      }
+    }
+
     sendEmailNotification(
       `Event Updated: ${updatedData.title}`,
       `The event '${updatedData.title}' scheduled for ${updatedData.event_date} has been updated with new schedule or venue details.`
     );
   };
 
-  const deleteEvent = (id) => {
+  const deleteEvent = async (id) => {
     const eventToDelete = events.find(e => e.id === id);
     setEvents(prev => prev.filter(item => item.id !== id));
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('events').delete().eq('id', id);
+      } catch (e) {
+        console.error('Supabase event delete:', e);
+      }
+    }
+
     if (eventToDelete) {
       sendEmailNotification(
         `Event Cancelled: ${eventToDelete.title}`,
@@ -186,33 +269,65 @@ export const CalendarProvider = ({ children }) => {
   };
 
   // Staff Handlers
-  const addStaff = (staffData) => {
+  const addStaff = async (staffData) => {
     const newStaff = {
       ...staffData,
       id: 'staff-' + Date.now(),
       status: staffData.status || 'active'
     };
     setStaff(prev => [...prev, newStaff]);
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('staff').insert([newStaff]);
+      } catch (e) {
+        console.error('Supabase staff insert:', e);
+      }
+    }
     return newStaff;
   };
 
-  const updateStaff = (id, updatedData) => {
+  const updateStaff = async (id, updatedData) => {
     setStaff(prev =>
       prev.map(item => (item.id === id ? { ...item, ...updatedData } : item))
     );
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('staff').update(updatedData).eq('id', id);
+      } catch (e) {
+        console.error('Supabase staff update:', e);
+      }
+    }
   };
 
-  const deleteStaff = (id) => {
+  const deleteStaff = async (id) => {
     setStaff(prev => prev.filter(item => item.id !== id));
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('staff').delete().eq('id', id);
+      } catch (e) {
+        console.error('Supabase staff delete:', e);
+      }
+    }
   };
 
   // Holidays Handlers
-  const addHoliday = (holidayData) => {
+  const addHoliday = async (holidayData) => {
     const newHoliday = {
       ...holidayData,
       id: 'hol-' + Date.now()
     };
     setHolidays(prev => [...prev, newHoliday]);
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('holidays').insert([newHoliday]);
+      } catch (e) {
+        console.error('Supabase holiday insert:', e);
+      }
+    }
 
     addNotification({
       title: `Public Holiday Gazetted: ${newHoliday.name}`,
@@ -223,10 +338,19 @@ export const CalendarProvider = ({ children }) => {
     return newHoliday;
   };
 
-  const updateHoliday = (id, updatedData) => {
+  const updateHoliday = async (id, updatedData) => {
     setHolidays(prev =>
       prev.map(item => (item.id === id ? { ...item, ...updatedData } : item))
     );
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('holidays').update(updatedData).eq('id', id);
+      } catch (e) {
+        console.error('Supabase holiday update:', e);
+      }
+    }
+
     addNotification({
       title: `Public Holiday Updated: ${updatedData.name}`,
       message: `The date for ${updatedData.name} is confirmed for ${updatedData.holiday_date}.`,
@@ -235,12 +359,20 @@ export const CalendarProvider = ({ children }) => {
     });
   };
 
-  const deleteHoliday = (id) => {
+  const deleteHoliday = async (id) => {
     setHolidays(prev => prev.filter(item => item.id !== id));
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('holidays').delete().eq('id', id);
+      } catch (e) {
+        console.error('Supabase holiday delete:', e);
+      }
+    }
   };
 
   // Notifications Handlers
-  const addNotification = (notif) => {
+  const addNotification = async (notif) => {
     const newNotif = {
       ...notif,
       id: 'notif-' + Date.now(),
@@ -248,26 +380,57 @@ export const CalendarProvider = ({ children }) => {
       created_at: new Date().toISOString()
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('notifications').insert([newNotif]);
+      } catch (e) {
+        console.error('Supabase notification insert:', e);
+      }
+    }
   };
 
-  const markNotificationAsRead = (id) => {
+  const markNotificationAsRead = async (id) => {
     setNotifications(prev =>
       prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
     );
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+      } catch (e) {
+        console.error('Supabase notification update:', e);
+      }
+    }
   };
 
-  const markAllNotificationsAsRead = () => {
+  const markAllNotificationsAsRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('notifications').update({ is_read: true }).neq('id', 'placeholder');
+      } catch (e) {
+        console.error('Supabase mark all notifications:', e);
+      }
+    }
   };
 
-  const clearNotification = (id) => {
+  const clearNotification = async (id) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+
+    if (isCloudConnected && supabase) {
+      try {
+        await supabase.from('notifications').delete().eq('id', id);
+      } catch (e) {
+        console.error('Supabase notification delete:', e);
+      }
+    }
   };
 
-  // Convert Staff Birthdays into dynamic calendar items for any given year
+  // Derived Staff Birthdays
   const getStaffBirthdayEvents = (year = 2026) => {
     return staff.map(member => {
-      // member.birthday is YYYY-MM-DD
       const parts = member.birthday.split('-');
       const monthDay = parts.length === 3 ? `${parts[1]}-${parts[2]}` : '01-01';
       const eventDate = `${year}-${monthDay}`;
@@ -276,7 +439,7 @@ export const CalendarProvider = ({ children }) => {
         id: `bday-${member.id}-${year}`,
         title: `${member.full_name}'s Birthday 🎂`,
         category: 'birthday',
-        description: `Celebrate with ${member.full_name} (${member.department}). Reach out at ${member.email}`,
+        description: `Celebrate with ${member.full_name} (${member.department}). Contact: ${member.email}`,
         event_date: eventDate,
         start_time: 'All Day',
         end_time: 'All Day',
@@ -288,13 +451,13 @@ export const CalendarProvider = ({ children }) => {
     });
   };
 
-  // Convert Public Holidays into calendar items
+  // Derived Public Holidays
   const getPublicHolidayEvents = () => {
     return holidays.map(h => ({
       id: `hol-evt-${h.id}`,
       title: `${h.name} (Public Holiday 🇳🇬)`,
       category: 'holiday',
-      description: h.description + (h.is_lunar_estimated ? ' (Subject to lunar confirmation by NSCIA / FG)' : ''),
+      description: h.description + (h.is_lunar_estimated ? ' (Subject to lunar sighting confirmation)' : ''),
       event_date: h.holiday_date,
       start_time: 'All Day',
       end_time: 'All Day',
@@ -305,7 +468,6 @@ export const CalendarProvider = ({ children }) => {
     }));
   };
 
-  // Combined Master Calendar Items
   const getAllCalendarItems = (year = 2026) => {
     const birthdayEvents = getStaffBirthdayEvents(year);
     const holidayEvents = getPublicHolidayEvents();
@@ -319,6 +481,8 @@ export const CalendarProvider = ({ children }) => {
         setCurrentUser,
         switchRole,
         isAdmin: currentUser?.role === 'admin',
+        isCloudConnected,
+        isLoadingCloud,
         events,
         addEvent,
         updateEvent,
