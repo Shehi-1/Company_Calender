@@ -8,17 +8,26 @@ import {
   User,
   CheckCircle2,
   Calendar,
-  X
+  X,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useCalendar } from '../context/CalendarContext';
 
-export default function Header({ setMobileOpen, onOpenNewEvent, onOpenSearch }) {
-  const { currentUser, notifications, markNotificationAsRead, markAllNotificationsAsRead, isAdmin } = useCalendar();
+export default function Header({ setMobileOpen, onOpenNewEvent }) {
+  const {
+    currentUser,
+    notifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    isAdmin,
+    lockToStaff,
+    setIsAdminModalOpen
+  } = useCalendar();
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
 
   const unreadNotifications = notifications.filter(n => !n.is_read);
 
-  // Today's formatted date in West Africa Time
   const todayFormatted = new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -56,21 +65,34 @@ export default function Header({ setMobileOpen, onOpenNewEvent, onOpenSearch }) 
 
         {/* Right Side: Quick Action, Notifications & User Status */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Quick Add Event (Admin Only) */}
+          {/* Admin vs Staff Badge / Trigger */}
           {isAdmin ? (
-            <button
-              onClick={onOpenNewEvent}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm shadow-blue-600/20 transition-all hover:shadow"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Event</span>
-              <span className="sm:hidden">Add</span>
-            </button>
-          ) : (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200">
-              <User className="h-3.5 w-3.5 text-slate-400" />
-              <span>Staff Viewing Access</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onOpenNewEvent}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm shadow-blue-600/20 transition-all hover:shadow"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">New Event</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+              <button
+                onClick={lockToStaff}
+                title="Lock admin session"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 text-xs font-bold rounded-lg transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5 text-amber-600" />
+                <span>Admin Active</span>
+              </button>
             </div>
+          ) : (
+            <button
+              onClick={() => setIsAdminModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-bold rounded-lg border border-slate-200 hover:border-blue-300 transition-all shadow-xs"
+            >
+              <Unlock className="h-3.5 w-3.5 text-amber-500" />
+              <span>Admin PIN Login</span>
+            </button>
           )}
 
           {/* In-App Notifications Dropdown */}
@@ -151,16 +173,16 @@ export default function Header({ setMobileOpen, onOpenNewEvent, onOpenSearch }) 
             )}
           </div>
 
-          {/* User Badge */}
+          {/* User Profile Avatar */}
           <div className="hidden md:flex items-center gap-2 pl-2 border-l border-slate-200">
             <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${
-              isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+              isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
             }`}>
-              {currentUser.name.charAt(0)}
+              {isAdmin ? 'A' : 'S'}
             </div>
             <div className="text-left text-xs leading-none">
               <p className="font-bold text-slate-800">{currentUser.name.split(' ')[0]}</p>
-              <p className="text-[10px] text-slate-500 capitalize">{currentUser.role}</p>
+              <p className="text-[10px] text-slate-500 capitalize">{currentUser.role} mode</p>
             </div>
           </div>
         </div>

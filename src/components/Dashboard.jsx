@@ -11,7 +11,10 @@ import {
   Megaphone,
   Briefcase,
   ChevronRight,
-  CalendarCheck
+  CalendarCheck,
+  ShieldCheck,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useCalendar } from '../context/CalendarContext';
 import { CATEGORY_CONFIG } from '../data/initialData';
@@ -24,40 +27,29 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
     holidays,
     notifications,
     getAllCalendarItems,
-    isAdmin
+    isAdmin,
+    setIsAdminModalOpen,
+    lockToStaff
   } = useCalendar();
 
   const allItems = getAllCalendarItems(2026);
+  const todayStr = '2026-11-19';
 
-  // Today reference string
-  const todayStr = '2026-11-17'; // Based on context timestamp
-  const now = new Date('2026-11-17T12:00:00');
-
-  // Compute Statistics
   const upcomingEvents = allItems
     .filter(item => item.event_date >= todayStr)
     .sort((a, b) => a.event_date.localeCompare(b.event_date));
 
   const totalUpcomingEvents = upcomingEvents.length;
 
-  // Upcoming Staff Birthdays (next 45 days)
-  const currentMonth = 11; // November
   const upcomingBirthdays = staff.filter(s => {
     const parts = s.birthday.split('-');
     const month = parseInt(parts[1], 10);
     return month === 11 || month === 12;
   });
 
-  // Upcoming Public Holidays
   const upcomingHolidays = holidays.filter(h => h.holiday_date >= todayStr);
-
-  // Scheduled Meetings
   const scheduledMeetings = events.filter(e => e.category === 'meeting' && e.event_date >= todayStr);
-
-  // Upcoming Deadlines
   const upcomingDeadlines = events.filter(e => e.category === 'deadline' && e.event_date >= todayStr);
-
-  // Recent Announcements
   const recentAnnouncements = events.filter(e => e.category === 'announcement' || e.category === 'training');
 
   return (
@@ -68,14 +60,16 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-700/50 border border-blue-400/30 text-xs font-semibold text-blue-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              Corporate Operations Portal • Nigeria HQ
+              <span className={`h-2 w-2 rounded-full ${isAdmin ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+              <span>{isAdmin ? 'Administrator Dashboard (Full Privileges)' : 'Staff Public Calendar (Free Access)'}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Welcome back, {currentUser.name}!
+              {isAdmin ? `Welcome, ${currentUser.name}!` : 'Welcome to Company Portal!'}
             </h1>
             <p className="text-sm sm:text-base text-blue-100/90 leading-relaxed">
-              Stay synchronised with executive meetings, statutory Nigerian holidays, project deadlines and team milestones across the enterprise.
+              {isAdmin
+                ? 'You are in Administrator Mode. You have full permissions to schedule meetings, update staff records, and manage Nigerian public holidays.'
+                : 'Free viewing access is active. Check out all upcoming corporate events, colleague birthdays, national statutory holidays, and meetings below.'}
             </p>
           </div>
 
@@ -87,7 +81,8 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
               <CalendarDays className="h-4 w-4 text-blue-700" />
               Open Full Calendar
             </button>
-            {isAdmin && (
+
+            {isAdmin ? (
               <button
                 onClick={onOpenNewEvent}
                 className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm shadow-md transition-all border border-blue-400/30 flex items-center gap-2"
@@ -95,14 +90,50 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
                 <Plus className="h-4 w-4" />
                 Schedule Event
               </button>
+            ) : (
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow-md transition-all flex items-center gap-2"
+              >
+                <Unlock className="h-4 w-4" />
+                <span>Admin Login (5-digit PIN)</span>
+              </button>
             )}
           </div>
         </div>
       </div>
 
+      {/* Role Banner / Admin Lock Indicator */}
+      {isAdmin ? (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 font-semibold">
+            <ShieldCheck className="h-4 w-4 text-amber-600" />
+            <span>Admin mode is currently unlocked. Remember to lock your session when stepping away.</span>
+          </div>
+          <button
+            onClick={lockToStaff}
+            className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-1.5"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            <span>Lock Back to Staff Mode</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <span>
+            Staff dashboard is open for all members. Administrative tools (event editing, staff deletion, holiday gazetting) are protected behind a 5-digit PIN.
+          </span>
+          <button
+            onClick={() => setIsAdminModalOpen(true)}
+            className="text-blue-600 hover:text-blue-800 font-bold underline shrink-0"
+          >
+            Enter Admin PIN
+          </button>
+        </div>
+      )}
+
       {/* 5 Key Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Card 1: Total Upcoming */}
         <div
           onClick={() => setActiveTab('calendar')}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -119,10 +150,9 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
             <span className="text-2xl font-black text-slate-900">{totalUpcomingEvents}</span>
             <span className="text-xs font-semibold text-emerald-600">Active</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">Scheduled across all units</p>
+          <p className="mt-1 text-xs text-slate-400">Scheduled activities</p>
         </div>
 
-        {/* Card 2: Staff Birthdays */}
         <div
           onClick={() => setActiveTab('birthdays')}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -142,7 +172,6 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
           <p className="mt-1 text-xs text-slate-400">Team celebrants coming up</p>
         </div>
 
-        {/* Card 3: Public Holidays */}
         <div
           onClick={() => setActiveTab('holidays')}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -159,10 +188,9 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
             <span className="text-2xl font-black text-slate-900">{upcomingHolidays.length}</span>
             <span className="text-xs font-semibold text-emerald-600">Nigerian 🇳🇬</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">Official statutory holidays</p>
+          <p className="mt-1 text-xs text-slate-400">Statutory public holidays</p>
         </div>
 
-        {/* Card 4: Scheduled Meetings */}
         <div
           onClick={() => setActiveTab('meetings')}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -179,10 +207,9 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
             <span className="text-2xl font-black text-slate-900">{scheduledMeetings.length}</span>
             <span className="text-xs font-semibold text-indigo-600">Booked</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">Standups & board sessions</p>
+          <p className="mt-1 text-xs text-slate-400">Executive & standups</p>
         </div>
 
-        {/* Card 5: Upcoming Deadlines */}
         <div
           onClick={() => setActiveTab('events')}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -199,13 +226,12 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
             <span className="text-2xl font-black text-slate-900">{upcomingDeadlines.length}</span>
             <span className="text-xs font-semibold text-rose-600">Priority</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">Key deliverables & audits</p>
+          <p className="mt-1 text-xs text-slate-400">Audits & project targets</p>
         </div>
       </div>
 
       {/* Main Grid: Upcoming Schedule & Announcements / Notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols): Next Upcoming Events Timeline */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
@@ -265,9 +291,8 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
           </div>
         </div>
 
-        {/* Right Column: Announcements & Notification Center */}
+        {/* Right Column: Announcements & Alerts */}
         <div className="space-y-6">
-          {/* Announcements Card */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -294,7 +319,6 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
             </div>
           </div>
 
-          {/* Quick Notification Widget */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">

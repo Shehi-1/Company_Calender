@@ -13,12 +13,20 @@ import {
   ShieldCheck,
   User,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useCalendar } from '../context/CalendarContext';
 
 export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobileOpen }) {
-  const { currentUser, switchRole, notifications } = useCalendar();
+  const {
+    currentUser,
+    isAdmin,
+    lockToStaff,
+    setIsAdminModalOpen,
+    notifications
+  } = useCalendar();
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -30,7 +38,7 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
     { id: 'holidays', label: 'Public Holidays', icon: Flag },
     { id: 'meetings', label: 'Meetings & Standups', icon: Users2 },
     { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount > 0 ? unreadCount : null },
-    { id: 'staff', label: 'Staff Management', icon: UserCheck, adminOnly: false },
+    { id: 'staff', label: 'Staff Management', icon: UserCheck },
     { id: 'settings', label: 'Company Settings', icon: Settings }
   ];
 
@@ -73,13 +81,13 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
           </span>
         </div>
 
-        {/* Current User Card & Fast Role Switcher */}
+        {/* Current User Card with Protected Admin PIN Unlock */}
         <div className="p-4 mx-3 my-3 rounded-xl bg-slate-800/70 border border-slate-700/60">
           <div className="flex items-center gap-3">
             <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm shadow ${
-              currentUser.role === 'admin' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+              isAdmin ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
             }`}>
-              {currentUser.role === 'admin' ? <ShieldCheck className="h-5 w-5 text-amber-400" /> : <User className="h-5 w-5 text-blue-400" />}
+              {isAdmin ? <ShieldCheck className="h-5 w-5 text-amber-400" /> : <User className="h-5 w-5 text-blue-400" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate">{currentUser.name}</p>
@@ -89,20 +97,32 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
 
           <div className="mt-3 pt-3 border-t border-slate-700/60 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className={`inline-block h-2 w-2 rounded-full ${currentUser.role === 'admin' ? 'bg-amber-400 ring-2 ring-amber-400/30' : 'bg-blue-400 ring-2 ring-blue-400/30'}`} />
+              <span className={`inline-block h-2 w-2 rounded-full ${isAdmin ? 'bg-amber-400 ring-2 ring-amber-400/30' : 'bg-emerald-400 ring-2 ring-emerald-400/30'}`} />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">
-                {currentUser.role === 'admin' ? 'Administrator' : 'Staff Member'}
+                {isAdmin ? 'Admin Mode' : 'Staff Mode'}
               </span>
             </div>
 
-            {/* Role Toggle Button for immediate interactive verification */}
-            <button
-              onClick={() => switchRole(currentUser.role === 'admin' ? 'staff' : 'admin')}
-              title={`Switch role to test ${currentUser.role === 'admin' ? 'Staff viewing restrictions' : 'Admin full controls'}`}
-              className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 bg-blue-950/60 hover:bg-blue-900/80 px-2 py-0.5 rounded border border-blue-700/50 transition-colors"
-            >
-              Switch to {currentUser.role === 'admin' ? 'Staff' : 'Admin'}
-            </button>
+            {/* Secure Admin Gate Button */}
+            {isAdmin ? (
+              <button
+                onClick={lockToStaff}
+                title="Lock admin session and return to staff view"
+                className="text-[11px] font-bold text-amber-300 hover:text-amber-200 bg-amber-950/60 hover:bg-amber-900/80 px-2 py-1 rounded border border-amber-700/50 flex items-center gap-1 transition-colors"
+              >
+                <Lock className="h-3 w-3" />
+                <span>Lock</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                title="Enter 5-digit security PIN to unlock administrator access"
+                className="text-[11px] font-bold text-blue-300 hover:text-white bg-blue-900/60 hover:bg-blue-800/80 px-2.5 py-1 rounded border border-blue-600/50 flex items-center gap-1 transition-colors shadow-xs"
+              >
+                <Unlock className="h-3 w-3 text-amber-400" />
+                <span>Admin Login</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -141,7 +161,7 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
           })}
         </div>
 
-        {/* Footer with Logout */}
+        {/* Footer */}
         <div className="p-4 border-t border-slate-800 space-y-2">
           <div className="bg-slate-800/40 rounded-lg p-2.5 text-xs text-slate-400 flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-slate-500 shrink-0" />
@@ -152,8 +172,8 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
           </div>
           <button
             onClick={() => {
-              if (confirm('Log out from Company Calendar Management System?')) {
-                switchRole('staff');
+              if (confirm('Sign out session?')) {
+                lockToStaff();
                 setActiveTab('dashboard');
               }
             }}

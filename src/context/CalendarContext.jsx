@@ -12,19 +12,27 @@ const CalendarContext = createContext(null);
 export const CalendarProvider = ({ children }) => {
   const isCloudConnected = isSupabaseConfigured();
 
-  // Current logged in user state (Toggleable between Admin and Staff for testing)
+  // 5-digit PIN for Admin security (Default: 12345, can be changed in Settings)
+  const [adminPin, setAdminPin] = useState(() => {
+    return localStorage.getItem('occ_admin_pin') || '12345';
+  });
+
+  // Current logged in user state (Defaults to Staff so access is free for all staff)
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('occ_user');
     return saved
       ? JSON.parse(saved)
       : {
-          id: 'user-admin-1',
-          name: 'Ibrahim Danladi',
-          email: 'admin.ibrahim@company.ng',
-          role: 'admin', // 'admin' | 'staff'
-          department: 'Executive Leadership'
+          id: 'user-staff-default',
+          name: 'Staff Member',
+          email: 'staff@company.ng',
+          role: 'staff', // 'admin' | 'staff'
+          department: 'General Staff'
         };
   });
+
+  // Global Admin PIN Modal Trigger
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   // State with LocalStorage fallback / cache
   const [events, setEvents] = useState(() => {
@@ -70,6 +78,10 @@ export const CalendarProvider = ({ children }) => {
 
   // Sync state changes to LocalStorage
   useEffect(() => {
+    localStorage.setItem('occ_admin_pin', adminPin);
+  }, [adminPin]);
+
+  useEffect(() => {
     localStorage.setItem('occ_user', JSON.stringify(currentUser));
   }, [currentUser]);
 
@@ -106,16 +118,13 @@ export const CalendarProvider = ({ children }) => {
     async function syncWithSupabase() {
       setIsLoadingCloud(true);
       try {
-        // 1. Fetch Events
         const { data: dbEvents, error: eventsError } = await supabase.from('events').select('*');
         if (!eventsError && dbEvents && dbEvents.length > 0) {
           if (isMounted) setEvents(dbEvents);
         } else if (!eventsError && dbEvents && dbEvents.length === 0) {
-          // Auto-seed initial demo events to Supabase so table is populated
           await supabase.from('events').insert(INITIAL_EVENTS);
         }
 
-        // 2. Fetch Staff
         const { data: dbStaff, error: staffError } = await supabase.from('staff').select('*');
         if (!staffError && dbStaff && dbStaff.length > 0) {
           if (isMounted) setStaff(dbStaff);
@@ -123,7 +132,6 @@ export const CalendarProvider = ({ children }) => {
           await supabase.from('staff').insert(INITIAL_STAFF);
         }
 
-        // 3. Fetch Holidays
         const { data: dbHolidays, error: holidaysError } = await supabase.from('holidays').select('*');
         if (!holidaysError && dbHolidays && dbHolidays.length > 0) {
           if (isMounted) setHolidays(dbHolidays);
@@ -131,7 +139,6 @@ export const CalendarProvider = ({ children }) => {
           await supabase.from('holidays').insert(DEFAULT_NIGERIAN_HOLIDAYS);
         }
 
-        // 4. Fetch Notifications
         const { data: dbNotifs, error: notifsError } = await supabase.from('notifications').select('*');
         if (!notifsError && dbNotifs && dbNotifs.length > 0) {
           if (isMounted) setNotifications(dbNotifs);
@@ -152,7 +159,44 @@ export const CalendarProvider = ({ children }) => {
     };
   }, [isCloudConnected]);
 
-  // Simulate Email Dispatch & Audit Trail
+  // Verify PIN to become Administrator
+  const verifyAndElevateAdmin = (enteredPin) => {
+    if (enteredPin === adminPin) {
+      setCurrentUser({
+        id: 'user-admin-1',
+        name: 'Ibrahim Danladi (Admin)',
+        email: 'admin.ibrahim@company.ng',
+        role: 'admin',
+        department: 'Executive Leadership'
+      });
+      return true;
+    }
+    return false;
+  };
+
+  // Switch back to Staff (Lock admin mode)
+  const lockToStaff = () => {
+    setCurrentUser({
+      id: 'user-staff-default',
+      name: 'Staff Member',
+      email: 'staff@company.ng',
+      role: 'staff',
+      department: 'General Staff'
+    });
+  };
+
+  const changeAdminPin = (oldPin, newPin) => {
+    if (oldPin !== adminPin) {
+      return { success: false, message: 'Current 5-digit PIN is incorrect.' };
+    }
+    if (!/^\d{5}$/.test(newPin)) {
+      return { success: false, message: 'New PIN must be exactly 5 numeric digits.' };
+    }
+    setAdminPin(newPin);
+    return { success: true, message: '5-digit security PIN updated successfully!' };
+  };
+
+  // Simulate Email Dispatch
   const sendEmailNotification = (subject, body, recipients = 'all') => {
     if (!companySettings.emailNotifications) return;
 
@@ -182,26 +226,6 @@ export const CalendarProvider = ({ children }) => {
         message: body,
         type: 'event',
         target_role: 'all'
-      });
-    }
-  };
-
-  const switchRole = (role) => {
-    if (role === 'admin') {
-      setCurrentUser({
-        id: 'user-admin-1',
-        name: 'Ibrahim Danladi',
-        email: 'admin.ibrahim@company.ng',
-        role: 'admin',
-        department: 'Executive Leadership'
-      });
-    } else {
-      setCurrentUser({
-        id: 'user-staff-2',
-        name: 'Amina Bello',
-        email: 'amina.bello@company.ng',
-        role: 'staff',
-        department: 'Human Resources'
       });
     }
   };
@@ -479,8 +503,13 @@ export const CalendarProvider = ({ children }) => {
       value={{
         currentUser,
         setCurrentUser,
-        switchRole,
         isAdmin: currentUser?.role === 'admin',
+        adminPin,
+        verifyAndElevateAdmin,
+        lockToStaff,
+        changeAdminPin,
+        isAdminModalOpen,
+        setIsAdminModalOpen,
         isCloudConnected,
         isLoadingCloud,
         events,

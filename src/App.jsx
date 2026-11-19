@@ -12,8 +12,11 @@ import StaffManagement from './components/StaffManagement';
 import SettingsView from './components/SettingsView';
 import EventDetailModal from './components/EventDetailModal';
 import EventFormModal from './components/EventFormModal';
+import AdminPinModal from './components/AdminPinModal';
+import { useCalendar } from './context/CalendarContext';
 
 export default function App() {
+  const { isAdminModalOpen, setIsAdminModalOpen } = useCalendar();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -101,6 +104,12 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* 5-Digit PIN Modal for Admin Access */}
+      <AdminPinModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+      />
 
       {/* Global Event Detail View Modal */}
       {selectedEvent && (
