@@ -68,12 +68,12 @@ export default function AdminPinModal({ isOpen, onClose }) {
             <X className="h-4 w-4" />
           </button>
 
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mb-3 shadow-lg">
-            <Lock className="h-6 w-6" />
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-white p-2.5 flex items-center justify-center mb-3 shadow-lg">
+            <img src="/robotz-logo.png" alt="Robotz Academy" className="h-full w-full object-contain" />
           </div>
           <h3 className="text-lg font-extrabold text-white">Administrator Access</h3>
           <p className="text-xs text-slate-400 mt-1">
-            Enter your 5-digit security PIN to unlock administrative controls
+            Enter the 5-digit PIN to unlock Robotz Academy administrative controls
           </p>
         </div>
 

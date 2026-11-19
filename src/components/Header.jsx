@@ -48,9 +48,9 @@ export default function Header({ setMobileOpen, onOpenNewEvent }) {
             <Menu className="h-6 w-6" />
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex h-9 w-9 rounded-lg bg-blue-50 text-blue-700 items-center justify-center">
-              <Calendar className="h-4 w-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-lg bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+              <img src="/robotz-logo.png" alt="Robotz Academy" className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">

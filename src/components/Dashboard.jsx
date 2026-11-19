@@ -58,19 +58,24 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 sm:p-8 shadow-xl">
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-700/50 border border-blue-400/30 text-xs font-semibold text-blue-200">
-              <span className={`h-2 w-2 rounded-full ${isAdmin ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
-              <span>{isAdmin ? 'Robotz Academy Administrator' : 'Robotz Academy Staff Portal'}</span>
+          <div className="flex items-start gap-4">
+            <div className="h-16 w-16 rounded-2xl bg-white p-2.5 shadow-lg border border-white/20 shrink-0 hidden sm:flex items-center justify-center">
+              <img src="/robotz-logo.png" alt="Robotz Academy Logo" className="h-full w-full object-contain" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              {isAdmin ? `Welcome, ${currentUser.name}!` : 'Welcome to Robotz Academy Portal!'}
-            </h1>
-            <p className="text-sm sm:text-base text-blue-100/90 leading-relaxed">
-              {isAdmin
-                ? 'You are in Administrator Mode. You have full permissions to schedule meetings, update staff records, and manage Nigerian public holidays.'
-                : 'Free viewing access is active. Check out all upcoming corporate events, colleague birthdays, national statutory holidays, and meetings below.'}
-            </p>
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-700/50 border border-blue-400/30 text-xs font-semibold text-blue-200">
+                <span className={`h-2 w-2 rounded-full ${isAdmin ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+                <span>{isAdmin ? 'Robotz Academy Administrator' : 'Robotz Academy Staff Portal'}</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                {isAdmin ? `Welcome, ${currentUser.name}!` : 'Welcome to Robotz Academy Portal!'}
+              </h1>
+              <p className="text-sm sm:text-base text-blue-100/90 leading-relaxed">
+                {isAdmin
+                  ? 'You are in Administrator Mode. You have full permissions to schedule meetings, update staff records, and manage Nigerian public holidays.'
+                  : 'Free viewing access is active. Check out all upcoming corporate events, colleague birthdays, national statutory holidays, and meetings below.'}
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

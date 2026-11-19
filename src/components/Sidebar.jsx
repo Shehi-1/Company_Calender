@@ -64,19 +64,19 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
         }`}
       >
         {/* Brand Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-              <CalendarDays className="h-5 w-5" />
+            <div className="h-11 w-11 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md shadow-purple-500/10 shrink-0">
+              <img src="/robotz-logo.png" alt="Robotz Academy Logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <h1 className="text-base font-bold tracking-tight text-white leading-tight">
                 Robotz Academy
               </h1>
-              <p className="text-xs text-slate-400 font-medium">Calendar & Operations</p>
+              <p className="text-xs text-purple-300 font-medium">Calendar & Operations</p>
             </div>
           </div>
-          <span className="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/20">
+          <span className="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-purple-500/20 text-purple-300 rounded-md border border-purple-500/30">
             v1.0
           </span>
         </div>
