@@ -14,7 +14,13 @@ export const CalendarProvider = ({ children }) => {
 
   // 5-digit PIN for Admin security (Default PIN: 20277)
   const [adminPin, setAdminPin] = useState(() => {
-    return localStorage.getItem('occ_admin_pin') || '20277';
+    const saved = localStorage.getItem('occ_admin_pin');
+    // If previously saved as old PIN '12345', automatically migrate to '20277'
+    if (!saved || saved === '12345') {
+      localStorage.setItem('occ_admin_pin', '20277');
+      return '20277';
+    }
+    return saved;
   });
 
   // Current logged in user state (Defaults to Staff so access is free for all staff)
