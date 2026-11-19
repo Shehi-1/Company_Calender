@@ -162,42 +162,34 @@ export const CalendarProvider = ({ children }) => {
     };
   }, [isCloudConnected]);
 
-  // Authenticate Staff member against members table using 4-digit Staff ID
-  const loginStaffMember = (enteredStaffId, password) => {
-    // Check against 4-digit ID alone prohibition
-    if (/^\d{4}$/.test(password)) {
-      return {
-        success: false,
-        message: 'Security policy: 4-digit Staff ID alone cannot be used as a password.'
-      };
+  // Authenticate Staff member by Staff ID only — no password required
+  const loginStaffMember = (enteredStaffId) => {
+    const trimmedId = String(enteredStaffId).trim();
+
+    if (!trimmedId) {
+      return { success: false, message: 'Please enter your Staff ID.' };
     }
 
+    // Match against company_id, staff_id, or id fields
     const member = staffMembers.find(m =>
-      String(m.company_id) === String(enteredStaffId)
+      String(m.company_id) === trimmedId ||
+      String(m.staff_id) === trimmedId ||
+      String(m.id) === trimmedId
     );
 
     if (!member) {
       return {
         success: false,
-        message: `No staff member found with Staff ID #${enteredStaffId}.`
-      };
-    }
-
-    // Check member password
-    const validPassword = member.password || 'staff123';
-    if (member.password && member.password !== password && password !== 'staff123') {
-      return {
-        success: false,
-        message: 'Incorrect password for this Staff ID.'
+        message: `Staff ID "${trimmedId}" not found. Please check your ID and try again.`
       };
     }
 
     const sessionUser = {
       id: member.id,
-      name: member.full_name,
-      email: member.email,
-      company_id: member.company_id,
-      department: member.department,
+      name: member.full_name || member.name,
+      email: member.email || '',
+      company_id: member.company_id || member.staff_id || member.id,
+      department: member.department || '',
       role: 'staff'
     };
 

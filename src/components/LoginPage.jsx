@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import {
-  Lock,
   User,
   ShieldCheck,
   Eye,
   EyeOff,
   AlertCircle,
   KeyRound,
-  Building,
-  CheckCircle2,
-  Sparkles
 } from 'lucide-react';
 import { useCalendar } from '../context/CalendarContext';
 
@@ -23,10 +19,8 @@ export default function LoginPage({ onLoginSuccess }) {
   const [adminError, setAdminError] = useState('');
   const [showAdminPin, setShowAdminPin] = useState(false);
 
-  // Staff Login States (4-Digit Staff ID + Password)
+  // Staff Login States — Staff ID only, no password
   const [staffId, setStaffId] = useState('');
-  const [staffPassword, setStaffPassword] = useState('');
-  const [showStaffPassword, setShowStaffPassword] = useState(false);
   const [staffError, setStaffError] = useState('');
 
   const handleAdminSubmit = (e) => {
@@ -49,11 +43,11 @@ export default function LoginPage({ onLoginSuccess }) {
     e.preventDefault();
     setStaffError('');
 
-    const res = loginStaffMember(staffId.trim(), staffPassword.trim());
+    const res = loginStaffMember(staffId.trim());
     if (res.success) {
       if (onLoginSuccess) onLoginSuccess('staff');
     } else {
-      setStaffError(res.message || 'Invalid Staff ID or Password.');
+      setStaffError(res.message || 'Staff ID not found. Please check and try again.');
     }
   };
 
@@ -108,13 +102,12 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
         </div>
 
-        {/* Tab 1: Staff Login Form */}
         {activeTab === 'staff' && (
-          <form onSubmit={handleStaffSubmit} className="p-6 sm:p-8 space-y-4">
+          <form onSubmit={handleStaffSubmit} className="p-6 sm:p-8 space-y-5">
             <div className="space-y-1">
               <h2 className="text-base font-bold text-white">Staff Member Sign In</h2>
               <p className="text-xs text-slate-400">
-                Enter your 4-digit Staff ID and password to access your personalized schedule.
+                Enter your Staff ID to access your personalized schedule.
               </p>
             </div>
 
@@ -127,72 +120,46 @@ export default function LoginPage({ onLoginSuccess }) {
 
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Staff ID (4 Digits) *
+                Staff ID *
               </label>
               <input
                 type="text"
                 required
-                maxLength={6}
-                placeholder="e.g. 1042"
+                maxLength={10}
+                placeholder="Enter your Staff ID"
                 value={staffId}
                 onChange={(e) => setStaffId(e.target.value)}
+                autoFocus
                 className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider font-semibold"
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  Password *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowStaffPassword(!showStaffPassword)}
-                  className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                >
-                  {showStaffPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  <span>{showStaffPassword ? 'Hide' : 'Show'}</span>
-                </button>
-              </div>
-              <input
-                type={showStaffPassword ? 'text' : 'password'}
-                required
-                placeholder="Enter your password"
-                value={staffPassword}
-                onChange={(e) => setStaffPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-              />
-              <p className="text-[11px] text-slate-500 mt-1">
-                Security policy: Staff ID alone cannot be used as the password.
-              </p>
-            </div>
-
             <button
               type="submit"
-              className="w-full mt-2 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2"
             >
-              <span>Sign In with Staff ID</span>
+              <User className="h-4 w-4" />
+              <span>Sign In</span>
             </button>
 
-            {/* Quick Demo Staff ID Helper */}
-            <div className="pt-3 border-t border-slate-800/80 text-center">
-              <span className="text-[11px] text-slate-500 block mb-2">Registered Staff IDs</span>
-              <div className="flex flex-wrap gap-1.5 justify-center">
-                {staffMembers.slice(0, 4).map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => {
-                      setStaffId(m.company_id || '1042');
-                      setStaffPassword(m.password || 'Amina@Pass2026');
-                    }}
-                    className="text-[10px] px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 font-mono font-medium transition-colors"
-                  >
-                    ID: {m.company_id} ({m.full_name.split(' ')[0]})
-                  </button>
-                ))}
+            {/* Quick-fill staff IDs from loaded data */}
+            {staffMembers.length > 0 && (
+              <div className="pt-3 border-t border-slate-800/80 text-center">
+                <span className="text-[11px] text-slate-500 block mb-2">Registered Staff IDs</span>
+                <div className="flex flex-wrap gap-1.5 justify-center">
+                  {staffMembers.slice(0, 6).map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setStaffId(String(m.company_id || m.staff_id || m.id))}
+                      className="text-[10px] px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 font-mono font-medium transition-colors"
+                    >
+                      {m.company_id || m.staff_id || m.id}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </form>
         )}
 
