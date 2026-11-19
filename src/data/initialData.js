@@ -1,5 +1,4 @@
-// Nigerian Public Holidays Database (Fixed & Estimated Lunar Observances)
-// Lunar holidays (Eid-el-Fitr, Eid-el-Kabir, Eid-el-Maulud) are subject to Islamic moon sightings and official FG declaration.
+// Nigerian Public Holidays Database & Sample Members for Robotz Academy
 
 export const DEFAULT_NIGERIAN_HOLIDAYS = [
   {
@@ -108,68 +107,66 @@ export const DEFAULT_NIGERIAN_HOLIDAYS = [
   }
 ];
 
+// Members table initial records with 4-digit Company IDs and secure passwords
 export const INITIAL_STAFF = [
   {
-    id: 'staff-1',
+    id: 'mem-1021',
+    company_id: '1021',
     full_name: 'Chinedu Eze',
-    email: 'chinedu.eze@company.ng',
-    department: 'Engineering & Technology',
+    email: 'chinedu.eze@robotzacademy.com',
+    password: 'Chinedu@2026',
+    department: 'Robotics & AI Engineering',
     birthday: '1992-03-15',
     phone_number: '+234 803 111 2233',
+    role: 'staff',
     status: 'active'
   },
   {
-    id: 'staff-2',
+    id: 'mem-1042',
+    company_id: '1042',
     full_name: 'Amina Bello',
-    email: 'amina.bello@company.ng',
-    department: 'Human Resources',
+    email: 'amina.bello@robotzacademy.com',
+    password: 'Amina@Pass2026',
+    department: 'Academic Operations',
     birthday: '1995-11-20',
     phone_number: '+234 802 444 5566',
+    role: 'staff',
     status: 'active'
   },
   {
-    id: 'staff-3',
+    id: 'mem-1088',
+    company_id: '1088',
     full_name: 'Babajide Adeleke',
-    email: 'babajide.adeleke@company.ng',
-    department: 'Finance & Accounts',
+    email: 'babajide.adeleke@robotzacademy.com',
+    password: 'JideSecure#88',
+    department: 'Finance & Curriculum',
     birthday: '1989-11-28',
     phone_number: '+234 818 777 8899',
+    role: 'staff',
     status: 'active'
   },
   {
-    id: 'staff-4',
-    full_name: 'Ngozi Okonjo-Nwosu',
-    email: 'ngozi.nwosu@company.ng',
-    department: 'Operations & Strategy',
-    birthday: '1991-01-14',
-    phone_number: '+234 805 999 0011',
-    status: 'active'
-  },
-  {
-    id: 'staff-5',
-    full_name: 'Yusuf Danjuma',
-    email: 'yusuf.danjuma@company.ng',
-    department: 'Sales & Marketing',
-    birthday: '1994-12-05',
-    phone_number: '+234 809 333 4455',
-    status: 'active'
-  },
-  {
-    id: 'staff-6',
+    id: 'mem-1105',
+    company_id: '1105',
     full_name: 'Fatima Abubakar',
-    email: 'fatima.abubakar@company.ng',
-    department: 'Product & Design',
+    email: 'fatima.abubakar@robotzacademy.com',
+    password: 'Fatima#Design26',
+    department: 'STEM Product Design',
     birthday: '1996-11-18',
     phone_number: '+234 812 666 7788',
+    role: 'staff',
     status: 'active'
   },
   {
-    id: 'staff-7',
-    full_name: 'Oluwaseun Balogun',
-    email: 'oluwaseun.balogun@company.ng',
-    department: 'Engineering & Technology',
-    birthday: '1990-07-22',
-    phone_number: '+234 807 555 4433',
+    id: 'mem-1150',
+    company_id: '1150',
+    full_name: 'Ngozi Okonjo-Nwosu',
+    email: 'ngozi.nwosu@robotzacademy.com',
+    password: 'Ngozi@Strategy26',
+    department: 'Strategy & Innovation',
+    birthday: '1991-01-14',
+    phone_number: '+234 805 999 0011',
+    role: 'staff',
     status: 'active'
   }
 ];
@@ -177,33 +174,33 @@ export const INITIAL_STAFF = [
 export const INITIAL_EVENTS = [
   {
     id: 'evt-1',
-    title: 'Q4 Strategic Planning & Review',
+    title: 'Q4 Strategic Planning & Curriculum Alignment',
     category: 'meeting',
-    description: 'Executive committee and department heads quarterly business review & Q1 target alignment.',
+    description: 'Executive committee and department leads quarterly review and curriculum milestone check.',
     event_date: '2026-11-24',
     start_time: '10:00',
     end_time: '13:00',
-    venue: 'Executive Boardroom & Microsoft Teams',
+    venue: 'Executive Innovation Lab & Microsoft Teams',
     participants: 'Executive Board, Department Leads, Project Managers',
     reminder_settings: '24 hours before'
   },
   {
     id: 'evt-2',
-    title: 'Enterprise Cyber Security Awareness Workshop',
+    title: 'STEM Robotics & Cyber Security Awareness Workshop',
     category: 'training',
-    description: 'Mandatory training for all staff on phishing defence, remote access security and credential safeguards.',
+    description: 'Mandatory workshop for all instructors on safety protocols, AI toolchains and remote access.',
     event_date: '2026-11-26',
     start_time: '14:00',
     end_time: '16:00',
     venue: 'Training Hall & Zoom Webinar',
-    participants: 'All Company Staff',
+    participants: 'All Academy Instructors & Staff',
     reminder_settings: '2 days before'
   },
   {
     id: 'evt-3',
-    title: 'Company 12th Anniversary Gala & Staff Awards',
+    title: 'Robotz Academy Annual Innovation Showcase & Awards',
     category: 'anniversary',
-    description: 'Celebration of our company founding, service milestones, award recognitions and dinner.',
+    description: 'Annual showcase of student projects, service milestones, instructor awards and gala.',
     event_date: '2026-12-10',
     start_time: '17:00',
     end_time: '21:30',
@@ -213,9 +210,9 @@ export const INITIAL_EVENTS = [
   },
   {
     id: 'evt-4',
-    title: 'Final Budget Submission Deadline FY2027',
+    title: 'Final Budget & Hardware Inventory Submission FY2027',
     category: 'deadline',
-    description: 'Submission of finalised departmental operating budgets to the Chief Financial Officer.',
+    description: 'Submission of finalised departmental operating budgets to the Academy Director.',
     event_date: '2026-11-30',
     start_time: '17:00',
     end_time: '17:00',
@@ -225,26 +222,14 @@ export const INITIAL_EVENTS = [
   },
   {
     id: 'evt-5',
-    title: 'Annual Health & Wellness Checkup Initiative',
-    category: 'announcement',
-    description: 'HMO on-site physical evaluations and medical consultation clinics in the Lagos and Abuja offices.',
-    event_date: '2026-12-02',
-    start_time: '09:00',
-    end_time: '16:00',
-    venue: 'Office Wellness Clinic Suite',
-    participants: 'All Staff Members',
-    reminder_settings: '1 day before'
-  },
-  {
-    id: 'evt-6',
     title: 'Weekly All-Hands Operational Standup',
     category: 'meeting',
-    description: 'Weekly synchronisation call across engineering, customer success, marketing, and operations.',
+    description: 'Weekly synchronisation call across engineering, faculty, and operations.',
     event_date: '2026-11-23',
     start_time: '09:30',
     end_time: '10:15',
     venue: 'Main Auditorium & Google Meet',
-    participants: 'All Organisation Staff',
+    participants: 'All Academy Staff',
     reminder_settings: '1 hour before'
   }
 ];
@@ -253,7 +238,7 @@ export const INITIAL_NOTIFICATIONS = [
   {
     id: 'notif-1',
     title: 'Upcoming Meeting: Q4 Strategic Review',
-    message: 'Q4 Strategic Planning & Review is scheduled for Nov 24, 2026 at 10:00 AM in the Boardroom.',
+    message: 'Q4 Strategic Planning is scheduled for Nov 24, 2026 at 10:00 AM.',
     type: 'meeting',
     target_role: 'all',
     is_read: false,
@@ -262,7 +247,7 @@ export const INITIAL_NOTIFICATIONS = [
   {
     id: 'notif-2',
     title: 'Staff Birthday: Fatima Abubakar',
-    message: 'Today is Fatima Abubakar’s birthday (Product & Design). Wish her a joyful day!',
+    message: 'Today is Fatima Abubakar’s birthday (STEM Product Design). Wish her a joyful day!',
     type: 'birthday',
     target_role: 'all',
     is_read: false,
@@ -270,21 +255,12 @@ export const INITIAL_NOTIFICATIONS = [
   },
   {
     id: 'notif-3',
-    title: 'Holiday Update Notice',
-    message: 'Official reminder regarding Nigerian Democracy Day and Federal Government public gazette alignment.',
+    title: 'Public Holiday Alert: Nigerian Democracy Day',
+    message: 'Official gazetted holiday observance for all team members.',
     type: 'holiday',
     target_role: 'all',
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
-  },
-  {
-    id: 'notif-4',
-    title: 'Urgent Deadline: Budget Submission FY2027',
-    message: 'Final budget submission closes on Nov 30, 2026 at 5:00 PM. Please ensure all line items are validated.',
-    type: 'deadline',
-    target_role: 'admin',
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString()
   }
 ];
 

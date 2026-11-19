@@ -13,10 +13,11 @@ import SettingsView from './components/SettingsView';
 import EventDetailModal from './components/EventDetailModal';
 import EventFormModal from './components/EventFormModal';
 import AdminPinModal from './components/AdminPinModal';
+import LoginPage from './components/LoginPage';
 import { useCalendar } from './context/CalendarContext';
 
 export default function App() {
-  const { isAdminModalOpen, setIsAdminModalOpen } = useCalendar();
+  const { currentUser, isAdminModalOpen, setIsAdminModalOpen } = useCalendar();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -24,6 +25,11 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState(null);
+
+  // If no user is logged in, show the brand new Separate Login Page
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={() => setActiveTab('dashboard')} />;
+  }
 
   const handleOpenNewEvent = () => {
     setEventToEdit(null);

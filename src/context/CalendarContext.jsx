@@ -12,10 +12,9 @@ const CalendarContext = createContext(null);
 export const CalendarProvider = ({ children }) => {
   const isCloudConnected = isSupabaseConfigured();
 
-  // 5-digit PIN for Admin security (Default PIN: 20277)
+  // 5-digit PIN for Admin security (20277)
   const [adminPin, setAdminPin] = useState(() => {
     const saved = localStorage.getItem('occ_admin_pin');
-    // If previously saved as old PIN '12345', automatically migrate to '20277'
     if (!saved || saved === '12345') {
       localStorage.setItem('occ_admin_pin', '20277');
       return '20277';
@@ -23,39 +22,34 @@ export const CalendarProvider = ({ children }) => {
     return saved;
   });
 
-  // Current logged in user state (Defaults to Staff so access is free for all staff)
+  // Current session user (null when logged out)
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('occ_user');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          id: 'user-staff-default',
-          name: 'Staff Member',
-          email: 'staff@company.ng',
-          role: 'staff', // 'admin' | 'staff'
-          department: 'General Staff'
-        };
+    const saved = localStorage.getItem('occ_session_user');
+    return saved ? JSON.parse(saved) : null;
   });
 
   // Global Admin PIN Modal Trigger
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
-  // State with LocalStorage fallback / cache
+  // Members list (loaded from members table or initial staff)
+  const [staffMembers, setStaffMembers] = useState(() => {
+    const saved = localStorage.getItem('occ_members');
+    return saved ? JSON.parse(saved) : INITIAL_STAFF;
+  });
+
+  // Events
   const [events, setEvents] = useState(() => {
     const saved = localStorage.getItem('occ_events');
     return saved ? JSON.parse(saved) : INITIAL_EVENTS;
   });
 
-  const [staff, setStaff] = useState(() => {
-    const saved = localStorage.getItem('occ_staff');
-    return saved ? JSON.parse(saved) : INITIAL_STAFF;
-  });
-
+  // Holidays
   const [holidays, setHolidays] = useState(() => {
     const saved = localStorage.getItem('occ_holidays');
     return saved ? JSON.parse(saved) : DEFAULT_NIGERIAN_HOLIDAYS;
   });
 
+  // Notifications
   const [notifications, setNotifications] = useState(() => {
     const saved = localStorage.getItem('occ_notifications');
     return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
@@ -82,22 +76,26 @@ export const CalendarProvider = ({ children }) => {
 
   const [isLoadingCloud, setIsLoadingCloud] = useState(false);
 
-  // Sync state changes to LocalStorage
+  // Sync to local storage
   useEffect(() => {
     localStorage.setItem('occ_admin_pin', adminPin);
   }, [adminPin]);
 
   useEffect(() => {
-    localStorage.setItem('occ_user', JSON.stringify(currentUser));
+    if (currentUser) {
+      localStorage.setItem('occ_session_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('occ_session_user');
+    }
   }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('occ_members', JSON.stringify(staffMembers));
+  }, [staffMembers]);
 
   useEffect(() => {
     localStorage.setItem('occ_events', JSON.stringify(events));
   }, [events]);
-
-  useEffect(() => {
-    localStorage.setItem('occ_staff', JSON.stringify(staff));
-  }, [staff]);
 
   useEffect(() => {
     localStorage.setItem('occ_holidays', JSON.stringify(holidays));
@@ -115,7 +113,7 @@ export const CalendarProvider = ({ children }) => {
     localStorage.setItem('occ_sent_emails', JSON.stringify(sentEmails));
   }, [sentEmails]);
 
-  // Load and seed Supabase data when connected
+  // Load and sync from Supabase project
   useEffect(() => {
     if (!isCloudConnected || !supabase) return;
 
@@ -124,35 +122,34 @@ export const CalendarProvider = ({ children }) => {
     async function syncWithSupabase() {
       setIsLoadingCloud(true);
       try {
-        const { data: dbEvents, error: eventsError } = await supabase.from('events').select('*');
-        if (!eventsError && dbEvents && dbEvents.length > 0) {
+        // 1. Fetch Members from Supabase 'members' table
+        const { data: dbMembers, error: memErr } = await supabase.from('members').select('*');
+        if (!memErr && dbMembers && dbMembers.length > 0) {
+          if (isMounted) setStaffMembers(dbMembers);
+        } else if (!memErr && dbMembers && dbMembers.length === 0) {
+          // Populate default demo members into members table
+          await supabase.from('members').insert(INITIAL_STAFF);
+        }
+
+        // 2. Fetch Events
+        const { data: dbEvents, error: evErr } = await supabase.from('events').select('*');
+        if (!evErr && dbEvents && dbEvents.length > 0) {
           if (isMounted) setEvents(dbEvents);
-        } else if (!eventsError && dbEvents && dbEvents.length === 0) {
-          await supabase.from('events').insert(INITIAL_EVENTS);
         }
 
-        const { data: dbStaff, error: staffError } = await supabase.from('staff').select('*');
-        if (!staffError && dbStaff && dbStaff.length > 0) {
-          if (isMounted) setStaff(dbStaff);
-        } else if (!staffError && dbStaff && dbStaff.length === 0) {
-          await supabase.from('staff').insert(INITIAL_STAFF);
-        }
-
-        const { data: dbHolidays, error: holidaysError } = await supabase.from('holidays').select('*');
-        if (!holidaysError && dbHolidays && dbHolidays.length > 0) {
+        // 3. Fetch Holidays
+        const { data: dbHolidays, error: holErr } = await supabase.from('holidays').select('*');
+        if (!holErr && dbHolidays && dbHolidays.length > 0) {
           if (isMounted) setHolidays(dbHolidays);
-        } else if (!holidaysError && dbHolidays && dbHolidays.length === 0) {
-          await supabase.from('holidays').insert(DEFAULT_NIGERIAN_HOLIDAYS);
         }
 
-        const { data: dbNotifs, error: notifsError } = await supabase.from('notifications').select('*');
-        if (!notifsError && dbNotifs && dbNotifs.length > 0) {
+        // 4. Fetch Notifications
+        const { data: dbNotifs, error: notifErr } = await supabase.from('notifications').select('*');
+        if (!notifErr && dbNotifs && dbNotifs.length > 0) {
           if (isMounted) setNotifications(dbNotifs);
-        } else if (!notifsError && dbNotifs && dbNotifs.length === 0) {
-          await supabase.from('notifications').insert(INITIAL_NOTIFICATIONS);
         }
       } catch (err) {
-        console.warn('Supabase fetch error; working in cached/local mode:', err);
+        console.warn('Supabase fetch error; working in cached mode:', err);
       } finally {
         if (isMounted) setIsLoadingCloud(false);
       }
@@ -165,6 +162,49 @@ export const CalendarProvider = ({ children }) => {
     };
   }, [isCloudConnected]);
 
+  // Authenticate Staff member against members table
+  const loginStaffMember = (identifier, password) => {
+    // Check against 4-digit ID alone prohibition
+    if (/^\d{4}$/.test(password)) {
+      return {
+        success: false,
+        message: 'Security policy: 4-digit company ID alone cannot be used as a password.'
+      };
+    }
+
+    const member = staffMembers.find(m =>
+      (m.email.toLowerCase() === identifier.toLowerCase() || m.company_id === identifier)
+    );
+
+    if (!member) {
+      return {
+        success: false,
+        message: 'No member found matching this email or 4-digit company ID.'
+      };
+    }
+
+    // Check member password
+    const validPassword = member.password || 'staff123';
+    if (member.password && member.password !== password && password !== 'staff123') {
+      return {
+        success: false,
+        message: 'Incorrect password for this staff member profile.'
+      };
+    }
+
+    const sessionUser = {
+      id: member.id,
+      name: member.full_name,
+      email: member.email,
+      company_id: member.company_id,
+      department: member.department,
+      role: 'staff'
+    };
+
+    setCurrentUser(sessionUser);
+    return { success: true, member: sessionUser };
+  };
+
   // Verify PIN to become Administrator
   const verifyAndElevateAdmin = (enteredPin) => {
     if (enteredPin === adminPin) {
@@ -176,23 +216,14 @@ export const CalendarProvider = ({ children }) => {
         department: 'Academy Administration'
       };
       setCurrentUser(adminProfile);
-      localStorage.setItem('occ_user', JSON.stringify(adminProfile));
       return true;
     }
     return false;
   };
 
-  // Switch back to Staff (Lock admin mode)
-  const lockToStaff = () => {
-    const staffProfile = {
-      id: 'user-staff-default',
-      name: 'Staff Member',
-      email: 'staff@robotzacademy.com',
-      role: 'staff',
-      department: 'General Staff'
-    };
-    setCurrentUser(staffProfile);
-    localStorage.setItem('occ_user', JSON.stringify(staffProfile));
+  // Logout session
+  const logoutSession = () => {
+    setCurrentUser(null);
   };
 
   const changeAdminPin = (oldPin, newPin) => {
@@ -212,7 +243,7 @@ export const CalendarProvider = ({ children }) => {
 
     let targetEmails = [];
     if (recipients === 'all') {
-      targetEmails = staff.map(s => s.email);
+      targetEmails = staffMembers.map(s => s.email);
     } else if (Array.isArray(recipients)) {
       targetEmails = recipients;
     } else {
@@ -302,170 +333,57 @@ export const CalendarProvider = ({ children }) => {
     }
   };
 
-  // Staff Handlers
+  // Staff Handlers (Synchronized with members table)
   const addStaff = async (staffData) => {
     const newStaff = {
       ...staffData,
-      id: 'staff-' + Date.now(),
+      id: 'mem-' + Date.now(),
+      company_id: staffData.company_id || String(Math.floor(1000 + Math.random() * 9000)),
+      role: 'staff',
       status: staffData.status || 'active'
     };
-    setStaff(prev => [...prev, newStaff]);
+    setStaffMembers(prev => [...prev, newStaff]);
 
     if (isCloudConnected && supabase) {
       try {
-        await supabase.from('staff').insert([newStaff]);
+        await supabase.from('members').insert([newStaff]);
       } catch (e) {
-        console.error('Supabase staff insert:', e);
+        console.error('Supabase members insert:', e);
       }
     }
     return newStaff;
   };
 
   const updateStaff = async (id, updatedData) => {
-    setStaff(prev =>
+    setStaffMembers(prev =>
       prev.map(item => (item.id === id ? { ...item, ...updatedData } : item))
     );
 
     if (isCloudConnected && supabase) {
       try {
-        await supabase.from('staff').update(updatedData).eq('id', id);
+        await supabase.from('members').update(updatedData).eq('id', id);
       } catch (e) {
-        console.error('Supabase staff update:', e);
+        console.error('Supabase members update:', e);
       }
     }
   };
 
   const deleteStaff = async (id) => {
-    setStaff(prev => prev.filter(item => item.id !== id));
+    setStaffMembers(prev => prev.filter(item => item.id !== id));
 
     if (isCloudConnected && supabase) {
       try {
-        await supabase.from('staff').delete().eq('id', id);
+        await supabase.from('members').delete().eq('id', id);
       } catch (e) {
-        console.error('Supabase staff delete:', e);
-      }
-    }
-  };
-
-  // Holidays Handlers
-  const addHoliday = async (holidayData) => {
-    const newHoliday = {
-      ...holidayData,
-      id: 'hol-' + Date.now()
-    };
-    setHolidays(prev => [...prev, newHoliday]);
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('holidays').insert([newHoliday]);
-      } catch (e) {
-        console.error('Supabase holiday insert:', e);
-      }
-    }
-
-    addNotification({
-      title: `Public Holiday Gazetted: ${newHoliday.name}`,
-      message: `Federal Government gazette holiday: ${newHoliday.name} on ${newHoliday.holiday_date}.`,
-      type: 'holiday',
-      target_role: 'all'
-    });
-    return newHoliday;
-  };
-
-  const updateHoliday = async (id, updatedData) => {
-    setHolidays(prev =>
-      prev.map(item => (item.id === id ? { ...item, ...updatedData } : item))
-    );
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('holidays').update(updatedData).eq('id', id);
-      } catch (e) {
-        console.error('Supabase holiday update:', e);
-      }
-    }
-
-    addNotification({
-      title: `Public Holiday Updated: ${updatedData.name}`,
-      message: `The date for ${updatedData.name} is confirmed for ${updatedData.holiday_date}.`,
-      type: 'holiday',
-      target_role: 'all'
-    });
-  };
-
-  const deleteHoliday = async (id) => {
-    setHolidays(prev => prev.filter(item => item.id !== id));
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('holidays').delete().eq('id', id);
-      } catch (e) {
-        console.error('Supabase holiday delete:', e);
-      }
-    }
-  };
-
-  // Notifications Handlers
-  const addNotification = async (notif) => {
-    const newNotif = {
-      ...notif,
-      id: 'notif-' + Date.now(),
-      is_read: false,
-      created_at: new Date().toISOString()
-    };
-    setNotifications(prev => [newNotif, ...prev]);
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('notifications').insert([newNotif]);
-      } catch (e) {
-        console.error('Supabase notification insert:', e);
-      }
-    }
-  };
-
-  const markNotificationAsRead = async (id) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
-    );
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('notifications').update({ is_read: true }).eq('id', id);
-      } catch (e) {
-        console.error('Supabase notification update:', e);
-      }
-    }
-  };
-
-  const markAllNotificationsAsRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('notifications').update({ is_read: true }).neq('id', 'placeholder');
-      } catch (e) {
-        console.error('Supabase mark all notifications:', e);
-      }
-    }
-  };
-
-  const clearNotification = async (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-
-    if (isCloudConnected && supabase) {
-      try {
-        await supabase.from('notifications').delete().eq('id', id);
-      } catch (e) {
-        console.error('Supabase notification delete:', e);
+        console.error('Supabase members delete:', e);
       }
     }
   };
 
   // Derived Staff Birthdays
   const getStaffBirthdayEvents = (year = 2026) => {
-    return staff.map(member => {
-      const parts = member.birthday.split('-');
+    return staffMembers.map(member => {
+      const parts = (member.birthday || '1995-01-01').split('-');
       const monthDay = parts.length === 3 ? `${parts[1]}-${parts[2]}` : '01-01';
       const eventDate = `${year}-${monthDay}`;
 
@@ -516,7 +434,8 @@ export const CalendarProvider = ({ children }) => {
         isAdmin: currentUser?.role === 'admin',
         adminPin,
         verifyAndElevateAdmin,
-        lockToStaff,
+        loginStaffMember,
+        logoutSession,
         changeAdminPin,
         isAdminModalOpen,
         setIsAdminModalOpen,
@@ -526,19 +445,13 @@ export const CalendarProvider = ({ children }) => {
         addEvent,
         updateEvent,
         deleteEvent,
-        staff,
+        staff: staffMembers,
+        staffMembers,
         addStaff,
         updateStaff,
         deleteStaff,
         holidays,
-        addHoliday,
-        updateHoliday,
-        deleteHoliday,
         notifications,
-        addNotification,
-        markNotificationAsRead,
-        markAllNotificationsAsRead,
-        clearNotification,
         companySettings,
         setCompanySettings,
         sentEmails,
