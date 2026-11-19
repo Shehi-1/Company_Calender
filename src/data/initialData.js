@@ -110,6 +110,17 @@ export const DEFAULT_NIGERIAN_HOLIDAYS = [
 // Members table initial records with 4-digit Company IDs and secure passwords
 export const INITIAL_STAFF = [
   {
+    id: 'mem-6104',
+    company_id: '6104',
+    full_name: 'Robotz Academy Staff',
+    email: 'staff6104@robotzacademy.com',
+    department: 'Robotics & STEM Operations',
+    birthday: '1995-06-15',
+    phone_number: '+234 800 000 6104',
+    role: 'staff',
+    status: 'active'
+  },
+  {
     id: 'mem-1021',
     company_id: '1021',
     full_name: 'Chinedu Eze',

@@ -33,8 +33,23 @@ export const CalendarProvider = ({ children }) => {
 
   // Members list (loaded from members table or initial staff)
   const [staffMembers, setStaffMembers] = useState(() => {
-    const saved = localStorage.getItem('occ_members');
-    return saved ? JSON.parse(saved) : INITIAL_STAFF;
+    try {
+      const saved = localStorage.getItem('occ_members');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure initial staff entries like 6104 are present if not already added
+        const has6104 = parsed.some(m => String(m.company_id) === '6104');
+        if (!has6104) {
+          const merged = [...INITIAL_STAFF, ...parsed.filter(p => !INITIAL_STAFF.some(i => i.id === p.id))];
+          localStorage.setItem('occ_members', JSON.stringify(merged));
+          return merged;
+        }
+        return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_STAFF;
   });
 
   // Events
