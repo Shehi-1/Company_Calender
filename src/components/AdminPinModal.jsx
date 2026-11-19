@@ -108,15 +108,14 @@ export default function AdminPinModal({ isOpen, onClose }) {
             )}
 
             {/* Toggle Visibility & Quick Helper */}
-            <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-              <span className="text-[11px] text-slate-400">Default: <strong>12345</strong></span>
+            <div className="flex items-center justify-end text-xs text-slate-500 pt-1">
               <button
                 type="button"
                 onClick={() => setShowPin(!showPin)}
                 className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
               >
                 {showPin ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                <span>{showPin ? 'Hide' : 'Peek'}</span>
+                <span>{showPin ? 'Hide PIN' : 'Show PIN'}</span>
               </button>
             </div>
 

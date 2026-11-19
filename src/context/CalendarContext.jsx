@@ -12,9 +12,9 @@ const CalendarContext = createContext(null);
 export const CalendarProvider = ({ children }) => {
   const isCloudConnected = isSupabaseConfigured();
 
-  // 5-digit PIN for Admin security (Default: 12345, can be changed in Settings)
+  // 5-digit PIN for Admin security (Default PIN: 20277)
   const [adminPin, setAdminPin] = useState(() => {
-    return localStorage.getItem('occ_admin_pin') || '12345';
+    return localStorage.getItem('occ_admin_pin') || '20277';
   });
 
   // Current logged in user state (Defaults to Staff so access is free for all staff)
