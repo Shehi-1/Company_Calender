@@ -66,12 +66,12 @@ export const CalendarProvider = ({ children }) => {
     return saved
       ? JSON.parse(saved)
       : {
-          companyName: 'Apex Global Enterprise Nigeria Ltd.',
+          companyName: 'Robotz Academy',
           workHours: '08:00 AM - 05:00 PM',
           defaultReminderTiming: '24 hours before',
           emailNotifications: true,
           inAppNotifications: true,
-          adminEmail: 'calendar-admin@company.ng'
+          adminEmail: 'admin@robotzacademy.com'
         };
   });
 
@@ -168,13 +168,15 @@ export const CalendarProvider = ({ children }) => {
   // Verify PIN to become Administrator
   const verifyAndElevateAdmin = (enteredPin) => {
     if (enteredPin === adminPin) {
-      setCurrentUser({
+      const adminProfile = {
         id: 'user-admin-1',
-        name: 'Ibrahim Danladi (Admin)',
-        email: 'admin.ibrahim@company.ng',
+        name: 'Robotz Academy',
+        email: 'admin@robotzacademy.com',
         role: 'admin',
-        department: 'Executive Leadership'
-      });
+        department: 'Academy Administration'
+      };
+      setCurrentUser(adminProfile);
+      localStorage.setItem('occ_user', JSON.stringify(adminProfile));
       return true;
     }
     return false;
@@ -182,13 +184,15 @@ export const CalendarProvider = ({ children }) => {
 
   // Switch back to Staff (Lock admin mode)
   const lockToStaff = () => {
-    setCurrentUser({
+    const staffProfile = {
       id: 'user-staff-default',
       name: 'Staff Member',
-      email: 'staff@company.ng',
+      email: 'staff@robotzacademy.com',
       role: 'staff',
       department: 'General Staff'
-    });
+    };
+    setCurrentUser(staffProfile);
+    localStorage.setItem('occ_user', JSON.stringify(staffProfile));
   };
 
   const changeAdminPin = (oldPin, newPin) => {

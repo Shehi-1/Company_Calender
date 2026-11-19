@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Company Calendar Management System',
-        short_name: 'OfficeCalendar',
-        description: 'Organisation Calendar, Events, Staff Birthdays & Holiday Management System',
+        name: 'Robotz Academy Calendar Management System',
+        short_name: 'RobotzAcademy',
+        description: 'Robotz Academy Organisation Calendar, Events, Staff Birthdays & Holiday Management System',
         theme_color: '#1e3a8a',
         background_color: '#f8fafc',
         display: 'standalone',

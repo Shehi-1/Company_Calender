@@ -71,7 +71,7 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
             </div>
             <div>
               <h1 className="text-base font-bold tracking-tight text-white leading-tight">
-                Apex Portal
+                Robotz Academy
               </h1>
               <p className="text-xs text-slate-400 font-medium">Calendar & Operations</p>
             </div>

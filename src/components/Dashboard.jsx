@@ -61,10 +61,10 @@ export default function Dashboard({ setActiveTab, onOpenNewEvent, onSelectEvent 
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-700/50 border border-blue-400/30 text-xs font-semibold text-blue-200">
               <span className={`h-2 w-2 rounded-full ${isAdmin ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
-              <span>{isAdmin ? 'Administrator Dashboard (Full Privileges)' : 'Staff Public Calendar (Free Access)'}</span>
+              <span>{isAdmin ? 'Robotz Academy Administrator' : 'Robotz Academy Staff Portal'}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              {isAdmin ? `Welcome, ${currentUser.name}!` : 'Welcome to Company Portal!'}
+              {isAdmin ? `Welcome, ${currentUser.name}!` : 'Welcome to Robotz Academy Portal!'}
             </h1>
             <p className="text-sm sm:text-base text-blue-100/90 leading-relaxed">
               {isAdmin
