@@ -162,24 +162,24 @@ export const CalendarProvider = ({ children }) => {
     };
   }, [isCloudConnected]);
 
-  // Authenticate Staff member against members table
-  const loginStaffMember = (identifier, password) => {
+  // Authenticate Staff member against members table using 4-digit Staff ID
+  const loginStaffMember = (enteredStaffId, password) => {
     // Check against 4-digit ID alone prohibition
     if (/^\d{4}$/.test(password)) {
       return {
         success: false,
-        message: 'Security policy: 4-digit company ID alone cannot be used as a password.'
+        message: 'Security policy: 4-digit Staff ID alone cannot be used as a password.'
       };
     }
 
     const member = staffMembers.find(m =>
-      (m.email.toLowerCase() === identifier.toLowerCase() || m.company_id === identifier)
+      String(m.company_id) === String(enteredStaffId)
     );
 
     if (!member) {
       return {
         success: false,
-        message: 'No member found matching this email or 4-digit company ID.'
+        message: `No staff member found with Staff ID #${enteredStaffId}.`
       };
     }
 
@@ -188,7 +188,7 @@ export const CalendarProvider = ({ children }) => {
     if (member.password && member.password !== password && password !== 'staff123') {
       return {
         success: false,
-        message: 'Incorrect password for this staff member profile.'
+        message: 'Incorrect password for this Staff ID.'
       };
     }
 
