@@ -125,10 +125,14 @@ export const CalendarProvider = ({ children }) => {
         // 1. Fetch Members from Supabase 'members' table
         const { data: dbMembers, error: memErr } = await supabase.from('members').select('*');
         if (!memErr && dbMembers && dbMembers.length > 0) {
-          if (isMounted) setStaffMembers(dbMembers);
-        } else if (!memErr && dbMembers && dbMembers.length === 0) {
-          // Populate default demo members into members table
-          await supabase.from('members').insert(INITIAL_STAFF);
+          // Normalize member fields (handle both first_name+last_name or full_name, and position or department)
+          const normalized = dbMembers.map(m => ({
+            ...m,
+            full_name: m.full_name || (m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : m.first_name || m.last_name || 'Staff Member'),
+            department: m.department || m.position || 'General Staff',
+            role: m.role || 'staff'
+          }));
+          if (isMounted) setStaffMembers(normalized);
         }
 
         // 2. Fetch Events
